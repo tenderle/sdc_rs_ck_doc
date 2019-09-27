@@ -52,14 +52,19 @@ The package can be installed with
 library(devtools)
 ```
 ```{r eval=FALSE, message=FALSE, warning=FALSE}
-install.packages("recordSwapping")
+install.packages("devtools")
+remotes::install_github(
+  repo = "sdcTools/recordSwapping",
+  ref="recordSwapping_prototype",
+  build_opts = c("--no-resave-data", "--no-manual")
+)
 ```
 
 ##Functionality
 The targeted record swapping can be applied using `recordSwap()`. The function has the following arguments:
 
 * `data`: micro data set including only integer vectors, the data supplied should ideally be a datatable or dataframe 
-* `similar`: column indices of variables in data which should be considered when swapping records. Only records having identical values in the specified variable will be swapped. There is the option to create multiple profiles. In that case the second one will only be checked if the first one does not find any matches (e.g. similar <- c(c(2,3),c(3)) first checks similarity in the second and the third column and if there is no match similarity will be checked for the third column only)
+* `similar`: column indices of variables in data which should be considered when swapping records. Only records having identical values in the specified variables will be swapped. 
 * `hierarchy`: column indices of variables in data which refer to the (geographic) hierarchy of the micro data set (for instance province > county > district > municipality)
 * `risk_variables`: column indices of variables in data which will be considered for estimating the risk
 * `hid`: column index in data which refers to the household identifier
@@ -347,7 +352,7 @@ Here the procedure was applied to `dat_test`
 + setting the `k_anonymity` rule to ``r k_anonymity``
 + setting the `swaprate` to ``r swaprate``
 
-Note: In R indexing usually starts with 1, but because this package was implemented in C++ indexing here begins with 0.
+Note: In R indexing usually starts with 1, but because this package was implemented in C++ indexing here begins with 0. This will however change if the function `recordSwap()` has fully matured and transitions from a testing to production-ready.
 
 ##Output and tools for measuring information loss
 
