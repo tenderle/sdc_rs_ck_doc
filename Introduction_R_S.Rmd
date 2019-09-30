@@ -3,13 +3,13 @@ title: "Introduction to the recordSwapping sdcTool in R"
 author: "Tessa Feller"
 date: "`r Sys.Date()`"
 output:
+  word_document:
+    toc: yes
+    toc_depth: '2'
   html_document:
     toc: yes
     toc_depth: '2'
   pdf_document:
-    toc: yes
-    toc_depth: '2'
-  word_document:
     toc: yes
     toc_depth: '2'
   md_document:
@@ -23,11 +23,11 @@ knitr::opts_chunk$set(
   tidy.opts=list(width.cutoff=60),tidy=TRUE,
   collapse = TRUE,
   comment = ">",
-  cache=FALSE #if set to FALSE the code is run every time again when knitting the document
+  cache=TRUE #if set to FALSE the code is run every time again when knitting the document
 )
 ```
 
-##Introduction
+## Introduction
 
 The targeted record swapping method is a pre-tabular Statistical Disclosure Control (SDC) technique. Records holding a high risk of identification are swapped within the level they hold that risk to a different area on the same hierarchy level. Possible swap partners are all records matching a given similarity profile.
 The goal of this package is to apply record swapping to statistical tables. This algorithm can be applied to micro data sets and is based on C++.
@@ -37,7 +37,7 @@ For more information on the function `recordSwap()` one can call the correspondi
 ?recordSwap
 ```
 
-##Main features of the package
+## Main features of the package
 First an overview of the main features of the `recordSwapping` package before illustrating how to use it on a synthetic data set. 
 
 * The swaprate is fixed and the swapping aims to strike the rate as good as possible.
@@ -45,7 +45,7 @@ First an overview of the main features of the `recordSwapping` package before il
 * The record swapping does not change single values, it only swaps records and all values belonging to that record.
 * Identification risk is calculated using counts over the hierarchy levels and the combination of all risk variables.
  
-##Installation
+## Installation
 The package can be installed with
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
@@ -60,12 +60,12 @@ remotes::install_github(
 )
 ```
 
-##Functionality
+## Functionality
 The targeted record swapping can be applied using `recordSwap()`. The function has the following arguments:
 
 * `data`: micro data set including only integer vectors, the data supplied should ideally be a datatable or dataframe 
 * `similar`: column indices of variables in data which should be considered when swapping records. Only records having identical values in the specified variables will be swapped. 
-* `hierarchy`: column indices of variables in data which refer to the (geographic) hierarchy of the micro data set (for instance province > county > district > municipality)
+* `hierarchy`: column indices of variables in data which refer to the (geographic) hierarchy of the micro data set (for instance province > district > county > municipality)
 * `risk_variables`: column indices of variables in data which will be considered for estimating the risk
 * `hid`: column index in data which refers to the household identifier
 * `k_anonymity`: integer defining the threshold of high risk records, a record is considered to be risky if not at least k records have the same value in the columns defined as risk variables
@@ -74,18 +74,18 @@ The targeted record swapping can be applied using `recordSwap()`. The function h
 
 Random test data can be created using `dat_test <- recordSwapping:::create.dat()`.
 
-##Explanation on how the tool works
+## Explanation on how the tool works
 
 * To start with, the micro data is ordered by `hid` and the identification risk for each record gets calculated. So far only counts is used as identification risk.
 * At each hierarchy level a set of values is created for records to be swapped. In all but the lowest hierarchy level this contains of all records which do not fulfill the `k_anonymity` and have not already been swapped. Those records are being swapped with other records, which do not belong to the same area on the same hierarchy level and were not swapped before.
 * Targeted record swapping starts from the highest level down. Swapping is applied at each hierarchy level to all records in the set of values. If `k_anonymity` is set to 0, only the swaprate is considered for swapping. (Careful if the data set is very small, the swaprate is often not stroke.) In general all records not fulfilling `k_anonymity` are swapped, even if the actual swaprate is already overcome. Contrary, additional swaps are made on the lowest hierarchy level if not enough swaps have been made before to reach the swaprate.
 * Swapping refers to the interchange of (geographic) variables defined in `hierarchy`. When a record is swapped all other records belonging to the same `hid` are swapped as well. 
 
-##Application
+## Application
 
 So far the package was tested on randomly generated micro data, containing three or four geographic levels (province, district, county and munincipality) used as hierarchy (`nuts1`to `lau2`). Additionally, the data set contained other  soziodemographic information, such as age and sex.
 
-###Loading the package
+### Loading the package
 
 ```{r,echo=TRUE,eval=TRUE}
 library(data.table)
@@ -93,7 +93,7 @@ library(recordSwapping)
 library(ggplot2)
 ```
 
-###Creating a random synthetic data set
+### Creating a random synthetic data set
 
 ```{r include=FALSE}
 give_position <- function(variable, codes) {
@@ -110,7 +110,7 @@ give_position <- function(variable, codes) {
 }
 ```
 
-####Creating geo data
+#### Creating geo data
 
 ```{r,echo=TRUE,eval=TRUE}
 N <- 820000   #creating a synthetic population of 820000 people 
@@ -160,7 +160,7 @@ geo.h <- rep(z_geo.h, round(p_geo.h * N))
 geo.h <- sample(geo.h, N, replace=TRUE)
 ```
 
-####Creating hierarchy
+#### Creating hierarchy
 
 Create hierarchy levels splitting the original variable `geo.h` into PP-D-CC-MMM (P: province, D: district, C:county, M: munincipality) works with `hier_separate()`. 
 
@@ -205,7 +205,7 @@ eliminate_dots <- function(x) {
 
 ```
 
-####Add remaining variables
+#### Add remaining variables
 
 ```{r,echo=TRUE,eval=TRUE}
 #creating sex variable with two different values
@@ -259,13 +259,13 @@ dat_test_orig <- data.table(id=id,
                             sex=sex)
 ```
 
-####Output
+#### Output
 
 ```{r,eval=TRUE, echo=TRUE}
 dat_test_orig
 ```
 
-####Change variables with dots
+#### Change variables with dots
 
 The original data includes `geo.h`, `yae.h` and `age.m` whose different levels are seperated by dots. This data gets falsified completely when record swapping is applied. The `recordSwap()` function can only handle numeric data, therefore all character strings must be compiled to numerics. Eliminating the dots is necessary using `give_position()`. `give_position()` saves each records' position in `c_age.m`, swaps are made with `dat_test` holding these indices as variables and afterwards changes the indices back into the proper age variable. Same problem as dots in `c_age.m` caused were caused for `c_yae.h` therefore using `give_position()` aswell. For more information on `give_position()` see [Appendix](#appendix).
 
@@ -296,7 +296,7 @@ That looks like this:
 dat_test 
 ```
 
-###Apply targeted record swapping
+### Apply targeted record swapping
 
 One possibility to apply record swapping to `dat_test` is:
 
@@ -354,12 +354,12 @@ Here the procedure was applied to `dat_test`
 
 Note: In R indexing usually starts with 1, but because this package was implemented in C++ indexing here begins with 0. This will however change if the function `recordSwap()` has fully matured and transitions from a testing to production-ready.
 
-##Output and tools for measuring information loss
+## Output and tools for measuring information loss
 
 The output consists of a data set of the same size including the same variables as the original test data set. 
 The following approach should give information on how high the information loss is. There are a few different options:
 
-###Measure information loss using `ck_cnt_measures()` function
+### Measure information loss using `ck_cnt_measures()` function
 
 ```{r, echo=TRUE, eval=TRUE, include=FALSE}
 
@@ -464,7 +464,7 @@ ck_cnt_measures <- function(orig, pert, exclude_zeros = TRUE) {
 }
 ```
 
-####Using `makeProblem()` function to create frequency vectors for original and swapped data set
+#### Using `makeProblem()` function to create frequency vectors for original and swapped data set
 
 The `makeProblem()` function delivers an opportunity to measure the loss of information by creating frequency tables. The function evaluates all possible cross combinations of the original data set as well as of the swapped data set and gives back the frequency of each combination of values. Afterwards one can apply `ck_cnt_measures()` to get different error metrics.
 
@@ -530,7 +530,7 @@ tab_sw <- sdcProb2df(prob_sw, addDups = TRUE, addNumVars=FALSE, dimCodes="origin
 ```
 
 
-####Using cellKey method and create frequency vectors for original perturbed and swapped and perturbed data set
+#### Using cellKey method and create frequency vectors for original perturbed and swapped and perturbed data set
 
 The future goal for statistical disclosure is to apply record swapping pre-tabular and afterwards cell key post-tabular. If that is done, one can easily take the `ck_cnt_measures()` function from the cellKey package to calculate the information loss by measuring the relative absolute distance, absolute distances of square roots as well as the cumulated distance and some other values.
 One option to apply the cell key method using the cellKey package from github is the following.
@@ -602,7 +602,7 @@ tab$perturb(v = c("total"))
 tab_sw_pert <- tab$freqtab(v = c("total"))
 ```
 
-####Compare original data to swapped and to swapped and perturbed data
+#### Compare original data to swapped and to swapped and perturbed data
 
 ```{r, echo=TRUE, eval=TRUE} 
 #original and swapped data
@@ -618,7 +618,7 @@ mean(tab_orig$freq - tab_sw$freq)
 mean(tab_orig$freq - tab_sw_pert$puwc)
 ```
 
-###Counting number of changed records from vectors
+### Counting number of changed records from vectors
 
 Another option to measure the amount of changed information is to simply write the data sets as vectors. Having both dataframes as numeric vectors offers the chance to count the number of records where both vectors differ and divide the sum by their length.
 That works with the function `changed_pct()`.
@@ -638,7 +638,7 @@ changed_pct(dat_test, dat_swapped)
 
 In case of the example that delivers that in total `r changed_pct(dat_test, dat_swapped)*100` % of all records were changed.
 
-###Count number of records whose relation between `id` and `lau2` 
+### Count number of records whose relation between `id` and `lau2` 
 
 An option for checking on how much data was actually swapped is to simply compare the proportion between `id` and `lau2` from the original data set to the swapped data set. Counting in how many records this proportion changed delivers the number of swaps made. Divided by N this delivers the rate of actual made swaps. This helps to check how close the number of swaps made is to the defined swaprate.
 
@@ -647,11 +647,11 @@ sum(((dat_test$id)/(dat_test$lau2))!=((dat_swapped$id)/(dat_swapped$lau2)))/N
 ```
 So obviously with `r sum(((dat_test$id)/(dat_test$lau2))!=((dat_swapped$id)/(dat_swapped$lau2)))/N *100` % the percentage of swaps made is quite close to the given swaprate of `r swaprate*100` %.
 
-###Summary
+### Summary
 
 The function was applied on randomly generated household data with ``r N`` households. The parameter `swaprate` was set to ``r swaprate`` and `k_anonymity` to ``r k_anonymity``. Targeted record swapping was used on four hierarchy levels having a total of 3770 different geographic areas on the lowest level. For swapping the runtime in this case was ``r run.time`` min.
 
-##Appendix
+## Appendix
 
 Function `hier_separate()` splits the data into its hierarchical levels and delivers separate columns as output in a data table. 
 
