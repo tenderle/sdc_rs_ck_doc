@@ -29,8 +29,7 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-The targeted record swapping method is a pre-tabular Statistical Disclosure Control (SDC) technique. Records holding a high risk of identification are swapped within the level they hold that risk to a different area on the same hierarchy level. Possible swap partners are all records matching a given similarity profile.
-The goal of this package is to apply record swapping to statistical tables. This algorithm can be applied to micro data sets and is based on C++.
+The targeted record swapping method is a pre-tabular Statistical Disclosure Control (SDC) technique. Records holding a high risk of identification are swapped (depending on the risk level) with a similar record in a different area. Possible swap partners are all records matching a given similarity profile. The goal of this package is to apply record swapping to statistical tablesThe goal of this package is to produce a microdata file from which coherently protected tables can be derived. This algorithm can be applied to micro data sets and is based on C++.
 For more information on the function `recordSwap()` one can call the corresponding help page through:
 
 ```{r,echo=TRUE,eval=FALSE}
